@@ -1,0 +1,83 @@
+---
+title: "Shiny Application and Reproducible Pitch"
+author: "QW"
+date: "2023-06-07"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Course Project
+This assignment has two parts. First, we will create a Shiny application and deploy it on Rstudio's servers. Second, we will use Slidify or Rstudio Presenter to prepare a reproducible pitch presentation about your application.
+
+
+## Load R Packages
+```{r}
+library(leaflet)
+library(shiny)
+library(miniUI)
+library(googleVis)
+library(plotly)
+library(manipulate)
+library(scatterplot3d)
+```
+
+## Dataset
+The dataset used in this app is mtcars, which comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). Here is a few rows in mtcars.
+```{r}
+head(mtcars)
+```
+
+## Subset the data by the types of transmission and numbers of cylinders.
+```{r}
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+
+    # Application title
+    titlePanel("Motor Trend Car Road Tests Dataset (1973-74 models"),
+
+    # Sidebar with a slider input for number of bins 
+    sidebarLayout(
+        sidebarPanel(
+            helpText("Car Performance Evaluation:"), 
+            #sliderInput('mpg', 'Miles/(US) gallon', min=0, max=40, value=c(0,40), step=10), 
+            sliderInput('disp', 'Displacement (cu.in.)', min=10, max=480, value=c(70,480), step=10), 
+            sliderInput('hp', 'Gross horsepower', min=100, max=340, value=c(100,340), step=10), 
+            checkboxGroupInput('am', 'Transmission:', c("Automatic"=0, "Manual"=1), selected = c(0,1)),
+            checkboxGroupInput('cyl', 'Number of Cylinders:', c("4"=4, "6"=6, "8"=8), selected = c(4,6,8))
+        ),
+
+        # Show a plot of the generated distribution
+        mainPanel(
+            dataTableOutput('table') 
+        )
+    )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+
+    output$table <- renderDataTable({
+        #mpg_seq <- seq(from = input$mpg[1], to = input$mpg[2], by = 1)
+        disp_seq <- seq(from = input$disp[1], to = input$disp[2], by = 0.1)
+        hp_seq <- seq(from = input$hp[1], to = input$hp[2], by = 1)
+        mydata <- transmute(mtcars, Car = rownames(mtcars),  Displacement = disp, 
+                            Horsepower = hp, Transmission = am, NumCylinders = cyl) 
+                             
+        mydata <- filter(mydata, Displacement %in% disp_seq, Horsepower %in% hp_seq, Transmission %in% input$am, NumCylinders %in% input$cyl)
+        #mydata <- filter(mydata, Transmission %in% input$am, NumCylinders %in% input$cyl)
+        
+        mydata <- mutate(mydata, Transmission = ifelse(Transmission==0, "automatic", "manual"))
+        mydata <- data.frame(mydata)
+        mydata
+        
+    })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+## Using this apps, you can have a brief picture about these automobile designs during the 1970 period time, by selecting the parameters you're interested in. Thank you!
